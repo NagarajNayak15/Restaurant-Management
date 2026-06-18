@@ -38,6 +38,7 @@ model MenuItem {
   description       String?
   price             Decimal
   imageUrl          String?
+  non_veg           Boolean  
   isAvailable       Boolean   @default(true)
   prepTimeMinutes   Int?
 
