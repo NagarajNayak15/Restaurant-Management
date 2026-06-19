@@ -1,7 +1,7 @@
 import fs from "fs"
 const publicKey=fs.readFileSync("public.key")
 import jwt from "jsonwebtoken"
-const verify= (req,res)=>{
+const auth= (req,res,next)=>{
      try {
 
     const authHeader = req.headers.authorization;
@@ -34,4 +34,4 @@ const verify= (req,res)=>{
     });}
 }
 
-export default verify
+export default auth
