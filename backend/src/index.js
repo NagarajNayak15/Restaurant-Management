@@ -3,6 +3,7 @@ import Cors from "cors"
 import verify from "./middleware/auth.js";
 import menuRoutes from "./routes/menu.routes.js";
 import tableRoutes from "./routes/table.routes.js";
+import orderRoutes from "./routes/order.routes.js";
 
 const app=express()
 app.use(Cors());
@@ -15,4 +16,5 @@ app.post('/verify',verify)
 
 app.use('/menu', menuRoutes);
 app.use('/table', tableRoutes);
+app.use('/order', orderRoutes);
 app.listen(8000);
