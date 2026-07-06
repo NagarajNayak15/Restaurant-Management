@@ -8,7 +8,7 @@ const CustomerDashboard = () => {
   return (
     <div>
       <Navbar/>
-       <Categories/>
+      <Categories/>
       <MenuCards/> 
       <ViewCart/>
     </div>

@@ -8,7 +8,7 @@ const Navbar = () => {
   const { cartCount, tableNumber } = useRestaurant();
   return (
     <nav className="flex items-center justify-between  sticky top-0 z-50  px-4 h-14 bg-white shadow-[0_1px_0_#f0ede8]">
-        <a href="#">
+        <a href="/">
         <img src={logo} alt="Logo" className="h-8 object-contain" />
       </a>
 

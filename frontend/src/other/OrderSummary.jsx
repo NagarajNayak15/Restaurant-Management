@@ -7,7 +7,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const OrderSummary = () => {
-  const { addToCart, removeFromCart, cart, cartCount, cartTotal } = useRestaurant();
+const { addToCart, removeFromCart, cartItems, cartCount, cartTotal } = useRestaurant();
 
   const taxes = Math.round(cartTotal * 0.075);
   const total = cartTotal + taxes;
@@ -40,7 +40,7 @@ const OrderSummary = () => {
           <h3 className="border border-[#e03040] text-[#e03040] text-[12px] font-semibold px-3 py-1 rounded">{cartCount} items </h3>
         </div>
 
-        {cart.map((item) => (
+        {cartItems.map((item) => (
           <div key={item.id} className="flex items-center gap-3 py-3 border-b border-gray-100">
             <img src={item.imageUrl} alt={item.name} className="w-12 h-12 rounded-lg object-cover" />
 
@@ -53,7 +53,7 @@ const OrderSummary = () => {
             <span className="text-[13px] w-4 text-center">{item.qty}</span>
             <button onClick={() => addToCart(item)}><Plus size={16} /></button>
 
-            <button onClick={() => removeFromCart(item.id, item.qty)} className="ml-2 text-gray-400">
+            <button onClick={() => removeFromCart(item.id, true)} className="ml-2 text-gray-400">
               <Trash2 size={18} />
             </button>
           </div>
