@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 const RestaurantContext = createContext(null);
 
@@ -28,6 +28,20 @@ export function RestaurantProvider({ children }) {
   const [activeCategory, setActiveCategory] = useState("All");
   const [dietFilter, setDietFilter] = useState("all");
   const [cart, setCart] = useState(loadCartFromStorage);
+  const [tableNumber, setTableNumberState] = useState(() => {
+    const storedTableNumber = Number(window.localStorage.getItem("tableNumber"));
+    return Number.isInteger(storedTableNumber) && storedTableNumber > 0 ? storedTableNumber : null;
+  });
+  const setTableNumber = useCallback((value) => {
+    if (Number.isInteger(value) && value > 0) {
+      window.localStorage.setItem("tableNumber", String(value));
+      setTableNumberState(value);
+      return;
+    }
+
+    window.localStorage.removeItem("tableNumber");
+    setTableNumberState(null);
+  }, []);
 
   useEffect(() => {
     const fetchMenuItems = async () => {
@@ -125,8 +139,6 @@ export function RestaurantProvider({ children }) {
     return items;
   }, [activeCategory, dietFilter, menuItems]);
 
-  const [tableNumber] = useState(12);
-
   return (
     <RestaurantContext.Provider
       value={{
@@ -145,6 +157,7 @@ export function RestaurantProvider({ children }) {
         cartCount,
         cartTotal,
         tableNumber,
+        setTableNumber,
       }}
     >
       {children}

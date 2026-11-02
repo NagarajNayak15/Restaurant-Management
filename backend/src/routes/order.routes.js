@@ -9,6 +9,8 @@ const router = express.Router();
 router.post("/", auth2Cust, orderController.createOrder);
 
 // Owner routes
+router.get("/events", auth, orderController.streamNewOrders);
+router.get("/", auth, orderController.getAllOrdersForOwner);
 router.put("/:id/status", auth, orderController.completeOrder);
 router.patch("/:orderId/items/:itemId/serve", auth, orderController.serveOrderItem);
 router.get("/:id", auth, orderController.getOrder);

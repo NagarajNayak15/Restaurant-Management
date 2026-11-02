@@ -1,34 +1,67 @@
 import { User, Phone } from "lucide-react";
 import { useState } from "react";
 import axios from "axios";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useRestaurant } from "../context/RestaurantContext";
 
-export default function Logins() {
-  const [name, setname] = useState("");
-  const [number, setnumber] = useState("");
+export default function Logins({ qrToken, qrTableNumber }) {
+  const [name, setName] = useState("");
+  const [number, setNumber] = useState("");
+  const [needsName, setNeedsName] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
-  const { token } = useParams();
+  const { setTableNumber } = useRestaurant();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    setErrorMessage("");
+
+    if (needsName && !name.trim()) {
+      setErrorMessage("Please enter your name.");
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
-      const res = await axios.post(`http://localhost:8000/table/customer/${token}`, {
-        name,
+      const response = await axios.post(`http://localhost:8000/table/customer/${qrToken}`, {
         phone: number,
+        ...(needsName ? { name } : {}),
       });
 
-      if (res?.data?.token) {
-        localStorage.setItem("token", res.data.token);
-        navigate("/");
+      if (response.data.needsName) {
+        setNeedsName(true);
+        return;
       }
+
+      if (response.data.token) {
+        let tableNumber = response.data.tableNumber ?? qrTableNumber;
+        if (!Number.isInteger(tableNumber) || tableNumber < 1) {
+          const { data } = await axios.get(`http://localhost:8000/table/available/${qrToken}`);
+          tableNumber = data.tableNumber;
+        }
+
+        if (!Number.isInteger(tableNumber) || tableNumber < 1) {
+          throw new Error("We couldn't identify your table. Please scan its QR code again.");
+        }
+
+        localStorage.setItem("token", response.data.token);
+        setTableNumber(tableNumber);
+        navigate("/");
+        return;
+      }
+
+      throw new Error("The server returned an unexpected login response.");
     } catch (error) {
-      console.error("Login failed", error);
+      setErrorMessage(
+        error.response?.data?.message || error.message || "We couldn't sign you in. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  
-  
   return (
     <div className="min-h-screen bg-[#FCFBFA] relative overflow-hidden flex items-center">
       {/* Background Decorations */}
@@ -42,11 +75,11 @@ export default function Logins() {
         {/* Hero */}
         <div className="text-center mb-10">
           <h1 className="text-4xl font-serif font-bold text-[#16213E]">
-            Welcome
+            {needsName ? "Almost there" : "Welcome"}
           </h1>
 
           <p className="mt-3 text-gray-500 leading-relaxed">
-            Enter your details to start
+            {needsName ? "Tell us your name to create your account." : "Enter your phone number to start"}
             <br />
             your dining experience.
           </p>
@@ -60,29 +93,33 @@ export default function Logins() {
 
         {/* Form */}
         <form className="space-y-5" onSubmit={handleSubmit}>
+          {needsName && (
+            <div>
+              <label htmlFor="customer-name" className="text-sm font-medium text-[#16213E]">
+                Full Name
+              </label>
 
-          {/* Name */}
-          <div>
-            <label className="text-sm font-medium text-[#16213E]">
-              Full Name
-            </label>
+              <div className="mt-2 flex items-center h-14 rounded-2xl bg-white border border-gray-200 px-4 shadow-sm">
+                <User size={20} className="text-[#E53946]" />
 
-            <div className="mt-2 flex items-center h-14 rounded-2xl bg-white border border-gray-200 px-4 shadow-sm">
-              <User size={20} className="text-[#E53946]" />
-
-              <input
-                type="text"
-                placeholder="Enter your name"
-                value={name}
-                className="ml-3 flex-1 outline-none bg-transparent placeholder:text-gray-400"
-                onChange={(e) => setname(e.target.value)}
-              />
+                <input
+                  id="customer-name"
+                  type="text"
+                  placeholder="Enter your name"
+                  value={name}
+                  required
+                  maxLength={100}
+                  autoComplete="name"
+                  className="ml-3 flex-1 outline-none bg-transparent placeholder:text-gray-400"
+                  onChange={(event) => setName(event.target.value)}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Phone */}
           <div>
-            <label className="text-sm font-medium text-[#16213E]">
+            <label htmlFor="customer-phone" className="text-sm font-medium text-[#16213E]">
               Phone Number
             </label>
 
@@ -94,19 +131,31 @@ export default function Logins() {
               </span>
 
               <input
+                id="customer-phone"
                 value={number}
-                onChange={(e) => setnumber(e.target.value)}
+                onChange={(event) => setNumber(event.target.value.replace(/\D/g, "").slice(0, 10))}
                 type="tel"
                 maxLength={10}
+                inputMode="numeric"
+                autoComplete="tel-national"
+                required
                 placeholder="9876543210"
                 className="flex-1 outline-none bg-transparent placeholder:text-gray-400"
+                readOnly={needsName}
               />
             </div>
           </div>
 
+          {errorMessage && (
+            <p role="alert" className="text-sm text-red-600">
+              {errorMessage}
+            </p>
+          )}
+
           {/* Continue */}
           <button
             type="submit"
+            disabled={isSubmitting}
             className="
               w-full
               h-14
@@ -119,17 +168,17 @@ export default function Logins() {
               shadow-red-200
               active:scale-95
               transition
+              disabled:cursor-not-allowed
+              disabled:opacity-70
             "
           >
-            Start Ordering
+            {isSubmitting ? "Please wait..." : needsName ? "Create Account" : "Continue"}
           </button>
         </form>
 
         {/* Footer */}
         <p className="text-center text-xs text-gray-400 mt-8 leading-relaxed">
-          Your information is only used to identify
-          <br />
-          your order during this visit.
+          Your phone number helps us identify your order.
         </p>
       </div>
     </div>

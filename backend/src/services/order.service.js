@@ -52,7 +52,11 @@ const createOrder = async ({ customerId, tableId, orderType, paymentMode, notes,
         })),
       },
     },
-    include: { orderItems: true },
+    include: {
+      orderItems: { include: { menuItem: { select: { name: true } } } },
+      table: { select: { tableNumber: true } },
+      customer: { select: { name: true } },
+    },
   });
 
   return created;
@@ -82,8 +86,19 @@ const getOrderById = async (id) => {
   return prisma.order.findUnique({ where: { id }, include: { orderItems: true } });
 };
 
+const getAllOrders = async () => {
+  return prisma.order.findMany({
+    include: {
+      orderItems: { include: { menuItem: { select: { name: true } } } },
+      table: { select: { tableNumber: true } },
+      customer: { select: { name: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+};
+
 const getOrdersForCustomer = async (customerId) => {
   return prisma.order.findMany({ where: { customerId }, include: { orderItems: true }, orderBy: { createdAt: "desc" } });
 };
 
-export { createOrder, setOrderStatus, markItemServed, getOrderById, getOrdersForCustomer };
+export { createOrder, setOrderStatus, markItemServed, getOrderById, getAllOrders, getOrdersForCustomer };

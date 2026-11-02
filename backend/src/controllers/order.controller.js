@@ -3,10 +3,12 @@ import {
   setOrderStatus,
   markItemServed,
   getOrderById,
+  getAllOrders,
   getOrdersForCustomer,
 } from "../services/order.service.js";
 
 import { prisma } from "../config/Prisma.js";
+import { publishNewOrder, subscribeToOrderEvents } from "../services/orderEvents.service.js";
 
 export const createOrder = async (req, res) => {
   try {
@@ -26,11 +28,35 @@ export const createOrder = async (req, res) => {
       items: payload.items,
     });
 
+    publishNewOrder(created);
     return res.status(201).json(created);
   } catch (err) {
     console.error(err);
     return res.status(400).json({ message: err.message || "Internal server error" });
   }
+};
+
+export const streamNewOrders = (req, res) => {
+  res.status(200);
+  res.set({
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache, no-transform",
+    Connection: "keep-alive",
+    "X-Accel-Buffering": "no",
+  });
+
+  const unsubscribe = subscribeToOrderEvents(res);
+  res.flushHeaders();
+  res.write(`event: connected\ndata: ${JSON.stringify({ connected: true })}\n\n`);
+
+  const heartbeat = setInterval(() => {
+    if (!res.destroyed && !res.writableEnded) res.write(": keep-alive\n\n");
+  }, 25000);
+
+  res.on("close", () => {
+    clearInterval(heartbeat);
+    unsubscribe();
+  });
 };
 
 export const completeOrder = async (req, res) => {
@@ -78,6 +104,16 @@ export const getOrder = async (req, res) => {
     const ord = await getOrderById(id);
     if (!ord) return res.status(404).json({ message: "Order not found" });
     return res.json(ord);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const getAllOrdersForOwner = async (req, res) => {
+  try {
+    const orders = await getAllOrders();
+    return res.json(orders);
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Internal server error" });

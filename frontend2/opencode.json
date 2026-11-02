@@ -1,0 +1,42 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  "provider": {
+    "naraya": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "NaraRouter",
+      "options": {
+        "baseURL": "https://router.bynara.id/v1",
+        "apiKey": "sk-nry-kq66mCV51bW0ZMtxnF3cDvhmAuVPqraA_Ry60v4QJG4"
+      },
+      "models": {
+        "mistral-large": {
+          "name": "Mistral Large",
+          "modalities": {
+            "input": [
+              "text"
+            ],
+            "output": [
+              "text"
+            ]
+          }
+        }
+      }
+    }
+  },
+
+  "model": "naraya/mistral-large",
+
+  "mcp": {
+      "21st": {
+        "type": "remote",
+        "enabled": true,
+        "url": "https://21st.dev/api/mcp",
+        "oauth": false,
+        "headers": {
+          "x-api-key": "21st_sk_623daa2af4cc4b44a7bff19781e66eb58838a47855a559a9e036ef4badd3bb39"
+        }
+      
+    }
+  }
+}
